@@ -252,11 +252,11 @@ func (o *Options) Parse(args []string) ([]string, error) {
 			case *string:
 				*v = val
 			case *int:
-				if i, e := strconv.ParseInt(val, 10,32); e != nil {
+				i, e := strconv.ParseInt(val, 10, 32)
+				if e != nil {
 					return nil, mkErr(ErrParsingValue, arg)
-				} else {
-					*v = int(i)
 				}
+				*v = int(i)
 			case *int64:
 				*v, e = strconv.ParseInt(val, 10, 64)
 				if e != nil {
