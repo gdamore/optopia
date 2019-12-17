@@ -116,31 +116,33 @@ func (o *Options) init() {
 }
 
 // Add registers a given function.
-func (o *Options) Add(opt *Option) error {
+func (o *Options) Add(opts ...*Option) error {
 	o.init()
-	if opt.ValueReceiver != nil {
-		opt.HasValue = true
-	}
-	if opt.Long == "" && opt.Short == "" {
-		return ErrShortAndLongEmpty
-	}
-	if opt.Long != "" {
-		if o.Long[opt.Long] != nil {
-			return mkErr(ErrDuplicateOption, opt.Short)
+	for _, opt := range opts {
+		if opt.ValueReceiver != nil {
+			opt.HasValue = true
 		}
-		o.Long[opt.Long] = opt
-	}
-	if opt.Short != "" {
-		if len(opt.Short) > 1 {
-			return mkErr(ErrShortOptionTooLong, opt.Short)
+		if opt.Long == "" && opt.Short == "" {
+			return ErrShortAndLongEmpty
 		}
-		if o.Short[opt.Short] != nil {
-			return mkErr(ErrDuplicateOption, opt.Short)
+		if opt.Long != "" {
+			if o.Long[opt.Long] != nil {
+				return mkErr(ErrDuplicateOption, opt.Short)
+			}
+			o.Long[opt.Long] = opt
 		}
-		o.Short[opt.Short] = opt
+		if opt.Short != "" {
+			if len(opt.Short) > 1 {
+				return mkErr(ErrShortOptionTooLong, opt.Short)
+			}
+			if o.Short[opt.Short] != nil {
+				return mkErr(ErrDuplicateOption, opt.Short)
+			}
+			o.Short[opt.Short] = opt
+		}
+		opt.Seen = false
+		opt.RawValue = ""
 	}
-	opt.Seen = false
-	opt.RawValue = ""
 	return nil
 }
 

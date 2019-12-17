@@ -38,7 +38,7 @@ func mustFailAs(t *testing.T, e error, eIs err) {
 	}
 	if !eIs.Is(e) {
 		_, file, line, _ := runtime.Caller(1)
-		t.Fatalf("%s:%d wrong error type", file, line)
+		t.Fatalf("%s:%d wrong error type %v != %v", file, line, e, eIs)
 	}
 }
 func mustParse(t *testing.T, opts *Options, args []string) []string {
@@ -128,6 +128,12 @@ func TestOptions_Add5(t *testing.T) {
 		Long: "long",
 	})
 	mustFailAs(t, opts.Add(&Option{Long: "long"}), ErrDuplicateOption)
+}
+
+func TestOptions_Add6(t *testing.T) {
+	opts := &Options{}
+	e := opts.Add(&Option{Long: "bob"}, &Option{Long: "bob"})
+	mustFailAs(t, e, ErrDuplicateOption)
 }
 
 func TestOptions_Reset(t *testing.T) {
