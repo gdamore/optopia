@@ -2,9 +2,9 @@
 
 image:https://img.shields.io/github/workflow/status/gdamore/optopia/build?logoColor=grey&logo=github&label=[Build Status,link="https://github.com/gdamore/optopia/actions"]
 image:https://img.shields.io/codecov/c/github/gdamore/optopia?logoColor=grey&logo=codecov&label=[Coverage,link="https://codecov.io/gh/gdamore/optopia"]
+image:https://img.shields.io/codacy/grade/ae82e1343985431aac6b6ad182021c6b?logoColor=grey&logo=codacy&label=[Code Quality,link="https://app.codacy.com/manual/gdamore/optopia/dashboard"]
 image:https://img.shields.io/badge/godoc-docs-blue.svg?label=&logo=go[GoDoc,link="https://godoc.org/gdamore/optopia"]
 image:https://img.shields.io/github/license/gdamore/optopia.svg?logoColor=silver&logo=Open Source Initiative&label=&color=blue[Apache 2.0 License,link="https://github.com/gdamore/optopia/blob/master/LICENSE"]
-// image:https://img.shields.io/codacy/grade/0addd1f6c00e4251b37854f3499e6d76?logoColor=grey&logo=codacy&label=[Code Quality,link="https://app.codacy.com/manual/gdamore/mangos/dashboard"]
 
 _Optopia_ is a simple utility library for parsing options, much in the
 style of `getopt()` or `getopt_long()`, but for Go programs.
