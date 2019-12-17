@@ -1,0 +1,49 @@
+= Optopia&trade;
+
+image:https://img.shields.io/github/workflow/status/gdamore/optopia/build?logoColor=grey&logo=github&label=[Build Status,link="https://github.com/gdamore/optopia/actions"]
+image:https://img.shields.io/codecov/c/github/gdamore/optopia?logoColor=grey&logo=codecov&label=[Coverage,link="https://codecov.io/gh/gdamore/optopia"]
+image:https://img.shields.io/badge/godoc-docs-blue.svg?label=&logo=go[GoDoc,link="https://godoc.org/gdamore/optopia"]
+image:https://img.shields.io/github/license/gdamore/optopia.svg?logoColor=silver&logo=Open Source Initiative&label=&color=blue[Apache 2.0 License,link="https://github.com/gdamore/optopia/blob/master/LICENSE"]
+// image:https://img.shields.io/codacy/grade/0addd1f6c00e4251b37854f3499e6d76?logoColor=grey&logo=codacy&label=[Code Quality,link="https://app.codacy.com/manual/gdamore/mangos/dashboard"]
+
+_Optopia_ is a simple utility library for parsing options, much in the
+style of `getopt()` or `getopt_long()`, but for Go programs.
+
+Why yet another `getopt` clone?
+
+We needed some basic functionality with easy callbacks that could be used
+disconnected from an application (so that we could create individual instances
+of an application to facilitate testing.)
+It wasn't immediately obvious that any of the usual suspects met that need.
+
+There are many other option parsers that offer more richness.
+Please feel free to use those if that's what you're looking for;
+we've aimed for simplicity.
+
+Note that some option parsers work by using reflection and structure tags.
+We find that a bit obtuse, and difficult to use.
+Such approaches also bypass the good type validation that Go gives us,
+so we "`opt`" (pardon the pun) to let the language help us.
+
+
+== Documentation
+
+For docs, see https://godoc.org/gdamore/optopia or run:
+
+    $ godoc -http=:6060
+
+then see http://localhost:6060/pkg/gdamore/optopia/
+
+== Dependencies
+
+None, apart from things found in the standard library.
+_Optopia_ should be portable to any platform Go runs on.
+
+== Testing
+
+This package supports internal self tests, which can be run in
+the idiomatic Go way.
+At present the code is completely covered by the test suite.
+
+'''
+Copyright 2019 Garrett D'Amore
