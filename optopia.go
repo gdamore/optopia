@@ -35,10 +35,7 @@ func (e err) Error() string {
 }
 
 func (e err) Is(target error) bool {
-	if strings.HasPrefix(target.Error(), string(e)) {
-		return true
-	}
-	return false
+	return strings.HasPrefix(target.Error(), string(e))
 }
 
 func mkErr(e error, opt string) err {
@@ -57,10 +54,10 @@ const (
 // Option represents a single option.  Allocate one of these and
 // pass it to Options.Add() to register.
 type Option struct {
-	// longOpts is the long form of the option (without the --).
+	// Long is the long form of the option (without the --).
 	Long string
 
-	// shortOpts is the short (single character) form of the option.
+	// Short is the short (single character) form of the option.
 	Short rune
 
 	// HasArg indicates that the option takes a value.

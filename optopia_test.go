@@ -965,7 +965,7 @@ func TestOptions_Parse23(t *testing.T) {
 	opts.Reset()
 	mustNotParse(t, opts, []string{"--i", "JUNK"})
 
-	args, e := opts.Parse([]string{"--i=3"})
+	_, e := opts.Parse([]string{"--i=3"})
 	if e == nil || e.Error() != "even numbers only" {
 		t.Errorf("handler didn't fail")
 	}
