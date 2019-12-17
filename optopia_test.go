@@ -78,28 +78,28 @@ func TestErr_Is(t *testing.T) {
 func TestOptions_Add(t *testing.T) {
 	opts := &Options{}
 	o := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	mustAdd(t, opts, o)
-	if opts.Long["verbose"] != o {
+	if opts.longOpts["verbose"] != o {
 		t.Error("Didn't register long")
 	}
-	if opts.Short["v"] != o {
+	if opts.shortOpts['v'] != o {
 		t.Error("Didn't register short")
 	}
-	if len(opts.Long) != 1 {
+	if len(opts.longOpts) != 1 {
 		t.Error("length of long wrong")
 	}
-	if len(opts.Short) != 1 {
+	if len(opts.shortOpts) != 1 {
 		t.Error("length of short wrong")
 	}
 	mustAdd(t, opts, &Option{
-		Short: "x",
+		Short: 'x',
 	})
 
-	if len(opts.Short) != 2 || len(opts.Long) != 1 {
+	if len(opts.shortOpts) != 2 || len(opts.longOpts) != 1 {
 		t.Error("length wrong")
 	}
 }
@@ -107,9 +107,9 @@ func TestOptions_Add(t *testing.T) {
 func TestOptions_Add2(t *testing.T) {
 	opts := &Options{}
 	mustAdd(t, opts, &Option{
-		Short: "x",
+		Short: 'x',
 	})
-	mustFailAs(t, opts.Add(&Option{Short: "x"}), ErrDuplicateOption)
+	mustFailAs(t, opts.Add(&Option{Short: 'x'}), ErrDuplicateOption)
 }
 
 func TestOptions_Add3(t *testing.T) {
@@ -118,8 +118,11 @@ func TestOptions_Add3(t *testing.T) {
 }
 
 func TestOptions_Add4(t *testing.T) {
-	opts := &Options{}
-	mustFailAs(t, opts.Add(&Option{Short: "bob"}), ErrShortOptionTooLong)
+	opts := &Options{} // Test non-alphas
+	mustAdd(t, opts, &Option{Short: 'Г'})
+	mustFailAs(t, opts.Add(&Option{Short: 'Г'}), ErrDuplicateOption)
+	mustAdd(t, opts, &Option{Long: "пипец"})
+
 }
 
 func TestOptions_Add5(t *testing.T) {
@@ -139,13 +142,13 @@ func TestOptions_Add6(t *testing.T) {
 func TestOptions_Reset(t *testing.T) {
 	opts := &Options{}
 	o := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
-		Seen:        true,
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
+		Seen:  true,
 	}
 	mustAdd(t, opts, o)
-	if opts.Long["verbose"] != o {
+	if opts.longOpts["verbose"] != o {
 		t.Error("Didn't register long")
 	}
 	opts.Reset()
@@ -157,10 +160,10 @@ func TestOptions_Reset(t *testing.T) {
 func TestOptions_Parse(t *testing.T) {
 	opts := &Options{}
 	o := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
-		Seen:        true,
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
+		Seen:  true,
 	}
 	mustAdd(t, opts, o)
 
@@ -174,9 +177,9 @@ func TestOptions_Parse(t *testing.T) {
 func TestOptions_Parse2(t *testing.T) {
 	opts := &Options{}
 	o := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	mustAdd(t, opts, o)
 
@@ -195,9 +198,9 @@ func TestOptions_Parse2(t *testing.T) {
 func TestOptions_Parse3(t *testing.T) {
 	opts := &Options{}
 	o := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	mustAdd(t, opts, o)
 
@@ -216,9 +219,9 @@ func TestOptions_Parse3(t *testing.T) {
 func TestOptions_Parse4(t *testing.T) {
 	opts := &Options{}
 	o := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	mustAdd(t, opts, o)
 
@@ -237,9 +240,9 @@ func TestOptions_Parse4(t *testing.T) {
 func TestOptions_Parse5(t *testing.T) {
 	opts := &Options{}
 	o := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	mustAdd(t, opts, o)
 
@@ -258,17 +261,17 @@ func TestOptions_Parse5(t *testing.T) {
 func TestOptions_Parse6(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "x",
-		Description: "Press the X button",
+		Short: 'x',
+		Help:  "Press the X button",
 	}
 	oY := &Option{
-		Short:       "y",
-		Description: "Press the Y button",
+		Short: 'y',
+		Help:  "Press the Y button",
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -295,18 +298,18 @@ func TestOptions_Parse6(t *testing.T) {
 func TestOptions_Parse7(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "x",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'x',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
+		Long: "y",
+		Help: "Press the Y button",
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -325,7 +328,7 @@ func TestOptions_Parse7(t *testing.T) {
 	if !oX.Seen {
 		t.Fail()
 	}
-	if oX.RawValue != "y" {
+	if oX.Raw != "y" {
 		t.Fail()
 	}
 	if oY.Seen {
@@ -336,18 +339,18 @@ func TestOptions_Parse7(t *testing.T) {
 func TestOptions_Parse8(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "x",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'x',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
+		Long: "y",
+		Help: "Press the Y button",
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -366,7 +369,7 @@ func TestOptions_Parse8(t *testing.T) {
 	if !oX.Seen {
 		t.Fail()
 	}
-	if oX.RawValue != "--y" {
+	if oX.Raw != "--y" {
 		t.Fail()
 	}
 	if oY.Seen {
@@ -377,18 +380,18 @@ func TestOptions_Parse8(t *testing.T) {
 func TestOptions_Parse9(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "x",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'x',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
+		Long: "y",
+		Help: "Press the Y button",
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -407,7 +410,7 @@ func TestOptions_Parse9(t *testing.T) {
 	if !oX.Seen {
 		t.Fail()
 	}
-	if oX.RawValue != "--y" {
+	if oX.Raw != "--y" {
 		t.Fail()
 	}
 	if oY.Seen {
@@ -418,19 +421,19 @@ func TestOptions_Parse9(t *testing.T) {
 func TestOptions_Parse10(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "y",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'y',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
-		HasValue:    true,
+		Long:   "y",
+		Help:   "Press the Y button",
+		HasArg: true,
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -449,7 +452,7 @@ func TestOptions_Parse10(t *testing.T) {
 	if !oX.Seen {
 		t.Fail()
 	}
-	if oX.RawValue != "--y" {
+	if oX.Raw != "--y" {
 		t.Fail()
 	}
 	if oY.Seen {
@@ -459,19 +462,19 @@ func TestOptions_Parse10(t *testing.T) {
 func TestOptions_Parse11(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "y",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'y',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
-		HasValue:    true,
+		Long:   "y",
+		Help:   "Press the Y button",
+		HasArg: true,
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -490,7 +493,7 @@ func TestOptions_Parse11(t *testing.T) {
 	if !oY.Seen {
 		t.Error("long not seen")
 	}
-	if oY.RawValue != "abc" {
+	if oY.Raw != "abc" {
 		t.Error("long value wrong")
 	}
 	if oX.Seen {
@@ -500,19 +503,19 @@ func TestOptions_Parse11(t *testing.T) {
 func TestOptions_Parse12(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "y",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'y',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
-		HasValue:    true,
+		Long:   "y",
+		Help:   "Press the Y button",
+		HasArg: true,
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -528,19 +531,19 @@ func TestOptions_Parse12(t *testing.T) {
 func TestOptions_Parse13(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "y",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'y',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
-		HasValue:    true,
+		Long:   "y",
+		Help:   "Press the Y button",
+		HasArg: true,
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -555,19 +558,19 @@ func TestOptions_Parse13(t *testing.T) {
 func TestOptions_Parse14(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "y",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'y',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
-		HasValue:    true,
+		Long:   "y",
+		Help:   "Press the Y button",
+		HasArg: true,
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -583,19 +586,19 @@ func TestOptions_Parse14(t *testing.T) {
 func TestOptions_Parse15(t *testing.T) {
 	opts := &Options{}
 	oV := &Option{
-		Short:       "v",
-		Long:        "verbose",
-		Description: "Enable verbose output",
+		Short: 'v',
+		Long:  "verbose",
+		Help:  "Enable verbose output",
 	}
 	oX := &Option{
-		Short:       "y",
-		Description: "Press the X button",
-		HasValue:    true,
+		Short:  'y',
+		Help:   "Press the X button",
+		HasArg: true,
 	}
 	oY := &Option{
-		Long:        "y",
-		Description: "Press the Y button",
-		HasValue:    true,
+		Long:   "y",
+		Help:   "Press the Y button",
+		HasArg: true,
 	}
 	mustAdd(t, opts, oV)
 	mustAdd(t, opts, oX)
@@ -614,7 +617,7 @@ func TestOptions_Parse15(t *testing.T) {
 	if !oY.Seen {
 		t.Error("long not seen")
 	}
-	if oY.RawValue != "--" {
+	if oY.Raw != "--" {
 		t.Error("long value wrong")
 	}
 	if oX.Seen {
@@ -626,10 +629,10 @@ func TestOptions_Parse16(t *testing.T) {
 	opts := &Options{}
 	var val string
 	oX := &Option{
-		Long:          "y",
-		Description:   "Press the X button",
-		HasValue:      true,
-		ValueReceiver: &val,
+		Long:   "y",
+		Help:   "Press the X button",
+		HasArg: true,
+		ArgP:   &val,
 	}
 	mustAdd(t, opts, oX)
 
@@ -643,7 +646,7 @@ func TestOptions_Parse16(t *testing.T) {
 	if !oX.Seen {
 		t.Error("long not seen")
 	}
-	if oX.RawValue != "--" {
+	if oX.Raw != "--" {
 		t.Error("long value wrong")
 	}
 	if val != "--" {
@@ -654,9 +657,9 @@ func TestOptions_Parse17(t *testing.T) {
 	opts := &Options{}
 	var val bool
 	oX := &Option{
-		Long:          "y",
-		Description:   "Press the X button",
-		ValueReceiver: &val,
+		Long: "y",
+		Help: "Press the X button",
+		ArgP: &val,
 	}
 	mustAdd(t, opts, oX)
 
@@ -670,7 +673,7 @@ func TestOptions_Parse17(t *testing.T) {
 	if !oX.Seen {
 		t.Error("long not seen")
 	}
-	if oX.RawValue != "true" {
+	if oX.Raw != "true" {
 		t.Error("long value wrong")
 	}
 	if !val {
@@ -681,9 +684,9 @@ func TestOptions_Parse18(t *testing.T) {
 	opts := &Options{}
 	var val bool
 	oX := &Option{
-		Long:          "y",
-		Description:   "Press the X button",
-		ValueReceiver: &val,
+		Long: "y",
+		Help: "Press the X button",
+		ArgP: &val,
 	}
 	mustAdd(t, opts, oX)
 
@@ -694,7 +697,7 @@ func TestOptions_Parse18(t *testing.T) {
 	if !oX.Seen {
 		t.Error("long not seen")
 	}
-	if oX.RawValue != "yes" {
+	if oX.Raw != "yes" {
 		t.Error("long value wrong")
 	}
 	if !val {
@@ -734,9 +737,9 @@ func TestOptions_Parse19(t *testing.T) {
 	opts := &Options{}
 	var val int
 	oX := &Option{
-		Long:          "x",
-		Description:   "signed X coordinate",
-		ValueReceiver: &val,
+		Long: "x",
+		Help: "signed X coordinate",
+		ArgP: &val,
 	}
 	mustAdd(t, opts, oX)
 
@@ -747,7 +750,7 @@ func TestOptions_Parse19(t *testing.T) {
 	if !oX.Seen {
 		t.Error("long not seen")
 	}
-	if oX.RawValue != "32" {
+	if oX.Raw != "32" {
 		t.Error("long value wrong")
 	}
 	if val != 32 {
@@ -777,9 +780,9 @@ func TestOptions_Parse20(t *testing.T) {
 	opts := &Options{}
 	var val int64
 	oX := &Option{
-		Long:          "x",
-		Description:   "signed X coordinate",
-		ValueReceiver: &val,
+		Long: "x",
+		Help: "signed X coordinate",
+		ArgP: &val,
 	}
 	mustAdd(t, opts, oX)
 
@@ -790,7 +793,7 @@ func TestOptions_Parse20(t *testing.T) {
 	if !oX.Seen {
 		t.Error("long not seen")
 	}
-	if oX.RawValue != "32" {
+	if oX.Raw != "32" {
 		t.Error("long value wrong")
 	}
 	if val != 32 {
@@ -823,9 +826,9 @@ func TestOptions_Parse21(t *testing.T) {
 	opts := &Options{}
 	var val uint64
 	oX := &Option{
-		Long:          "x",
-		Description:   "unsigned X coordinate",
-		ValueReceiver: &val,
+		Long: "x",
+		Help: "unsigned X coordinate",
+		ArgP: &val,
 	}
 	mustAdd(t, opts, oX)
 
@@ -836,7 +839,7 @@ func TestOptions_Parse21(t *testing.T) {
 	if !oX.Seen {
 		t.Error("long not seen")
 	}
-	if oX.RawValue != "32" {
+	if oX.Raw != "32" {
 		t.Error("long value wrong")
 	}
 	if val != 32 {
@@ -868,9 +871,9 @@ func TestOptions_Parse22(t *testing.T) {
 	opts := &Options{}
 	var val net.IP
 	oX := &Option{
-		Long:          "ip",
-		Description:   "ip address",
-		ValueReceiver: &val,
+		Long: "ip",
+		Help: "ip address",
+		ArgP: &val,
 	}
 	mustAdd(t, opts, oX)
 
@@ -881,7 +884,7 @@ func TestOptions_Parse22(t *testing.T) {
 	if !oX.Seen {
 		t.Error("long not seen")
 	}
-	if oX.RawValue != "8.8.8.8" {
+	if oX.Raw != "8.8.8.8" {
 		t.Error("long value wrong")
 	}
 	if val.String() != "8.8.8.8" {
@@ -919,9 +922,9 @@ func TestOptions_Parse23(t *testing.T) {
 	var val int
 	var val2 int
 	oX := &Option{
-		Long:          "i",
-		Description:   "i",
-		ValueReceiver: &val,
+		Long: "i",
+		Help: "i",
+		ArgP: &val,
 		Handle: func(s string) error {
 			i, e := strconv.Atoi(s)
 			if e != nil {
@@ -943,7 +946,7 @@ func TestOptions_Parse23(t *testing.T) {
 	if !oX.Seen {
 		t.Error("not seen")
 	}
-	if oX.RawValue != "32" {
+	if oX.Raw != "32" {
 		t.Error("long value wrong")
 	}
 	if val2 != 32 {

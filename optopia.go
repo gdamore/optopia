@@ -51,67 +51,61 @@ const (
 	ErrOptionRequiresValue = err("option requires value")
 	ErrParsingValue        = err("failure parsing option value")
 	ErrDuplicateOption     = err("duplicate option")
-	ErrShortOptionTooLong  = err("short option too long")
 	ErrShortAndLongEmpty   = err("long and short options both empty")
 )
 
 // Option represents a single option.  Allocate one of these and
 // pass it to Options.Add() to register.
 type Option struct {
-	// Long is the long form of the option (without the --).
+	// longOpts is the long form of the option (without the --).
 	Long string
 
-	// Short is the short (single character) form of the option.
-	Short string
+	// shortOpts is the short (single character) form of the option.
+	Short rune
 
-	// HasValue indicates that the option takes a value.
-	// This setting only matters if Value is nil and Handle
-	// is not.  (Note that either Value should be non-nil, or
-	// Handle should.)
-	HasValue bool
+	// HasArg indicates that the option takes a value.
+	// This is presumed if ArgP is not nil.
+	HasArg bool
 
-	// Value is used to store the value.  At present
-	// this can be an integer or a string.
-	ValueReceiver interface{}
-
-	// ValueName is the name of the associated argument.
+	// ArgName is the name of the associated argument.
 	// Used principally in help output.
-	ValueName string
+	ArgName string
+
+	// ArgP is used to store the value.  At present
+	// this can be a pointer to string, int, int64, uint64, or bool.
+	// It can also be a TextUnmarshaller.
+	ArgP interface{}
 
 	// Handle is executed when this option is found, and passed the
-	// raw string.  If ValueReceiver is set, then any conversion is
+	// raw string.  If ArgP is set, then any conversion is
 	// is done first.  (If the conversion fails, then that error
 	// is returned to the caller, and Handle is not called.)
 	Handle func(string) error
 
-	// Description is a short help message about the option.
-	Description string
+	// Help is a short help message about the option.
+	Help string
 
 	// Seen is updated after Options.Parse.  It is true if the option
 	// was seen.  This is useful for options that have no value.
 	Seen bool
 
-	// RawValue contains the raw value for options that take one.
+	// Raw contains the raw value for options that take one.
 	// It is updated on Options.Parse.
-	RawValue string
+	Raw string
 }
 
 // Options are the main set of Options for a program.  The zero value is
 // usable immediately.
 type Options struct {
-	// Short is the map of short (-o) options
-	Short map[string]*Option
-
-	// Long is the map of long (--option) options.
-	Long map[string]*Option
-
+	shortOpts map[rune]*Option
+	longOpts map[string]*Option
 	initOnce sync.Once
 }
 
 func (o *Options) init() {
 	o.initOnce.Do(func() {
-		o.Short = make(map[string]*Option)
-		o.Long = make(map[string]*Option)
+		o.shortOpts = make(map[rune]*Option)
+		o.longOpts = make(map[string]*Option)
 	})
 }
 
@@ -119,29 +113,26 @@ func (o *Options) init() {
 func (o *Options) Add(opts ...*Option) error {
 	o.init()
 	for _, opt := range opts {
-		if opt.ValueReceiver != nil {
-			opt.HasValue = true
+		if opt.ArgP != nil {
+			opt.HasArg = true
 		}
-		if opt.Long == "" && opt.Short == "" {
+		if opt.Long == "" && opt.Short == 0 {
 			return ErrShortAndLongEmpty
 		}
 		if opt.Long != "" {
-			if o.Long[opt.Long] != nil {
-				return mkErr(ErrDuplicateOption, opt.Short)
+			if o.longOpts[opt.Long] != nil {
+				return mkErr(ErrDuplicateOption, string(opt.Short))
 			}
-			o.Long[opt.Long] = opt
+			o.longOpts[opt.Long] = opt
 		}
-		if opt.Short != "" {
-			if len(opt.Short) > 1 {
-				return mkErr(ErrShortOptionTooLong, opt.Short)
+		if opt.Short != 0 {
+			if o.shortOpts[opt.Short] != nil {
+				return mkErr(ErrDuplicateOption, string(opt.Short))
 			}
-			if o.Short[opt.Short] != nil {
-				return mkErr(ErrDuplicateOption, opt.Short)
-			}
-			o.Short[opt.Short] = opt
+			o.shortOpts[opt.Short] = opt
 		}
 		opt.Seen = false
-		opt.RawValue = ""
+		opt.Raw = ""
 	}
 	return nil
 }
@@ -150,13 +141,13 @@ func (o *Options) Add(opts ...*Option) error {
 // Use it to run through the option parsing multiple times.
 func (o *Options) Reset() {
 	o.init()
-	for _, opt := range o.Long {
+	for _, opt := range o.longOpts {
 		opt.Seen = false
-		opt.RawValue = ""
+		opt.Raw = ""
 	}
-	for _, opt := range o.Short {
+	for _, opt := range o.shortOpts {
 		opt.Seen = false
-		opt.RawValue = ""
+		opt.Raw = ""
 	}
 
 }
@@ -177,9 +168,9 @@ func (o *Options) Parse(args []string) ([]string, error) {
 			break
 		}
 		if strings.HasPrefix(arg, "--") {
-			// Long form.  First look for an exact match.
+			// longOpts form.  First look for an exact match.
 			name := strings.TrimPrefix(arg, "--")
-			if opt = o.Long[name]; opt != nil {
+			if opt = o.longOpts[name]; opt != nil {
 				args = args[1:]
 			} else {
 				// Maybe its a --option=value form.  Try
@@ -187,8 +178,8 @@ func (o *Options) Parse(args []string) ([]string, error) {
 				// takes an argument.
 				words := strings.SplitN(name, "=", 2)
 				if len(words) == 2 {
-					opt = o.Long[words[0]]
-					if opt != nil && opt.HasValue {
+					opt = o.longOpts[words[0]]
+					if opt != nil && opt.HasArg {
 						args[0] = words[1]
 					} else {
 						opt = nil
@@ -196,21 +187,22 @@ func (o *Options) Parse(args []string) ([]string, error) {
 				}
 			}
 		} else {
-			name := strings.TrimPrefix(arg, "-")
-			opt = o.Short[name[:1]]
+			// Starts with "-"
+			name := []rune(arg[1:])
+			opt = o.shortOpts[name[0]]
 			if opt != nil {
 				if len(name) > 1 {
-					if opt.HasValue {
+					if opt.HasArg {
 						// Look for -v= form. This isn't POSIX compliant.
 						// If '=' is short option, then we don't do this.
-						if name[1] == '=' && o.Short["="] == nil {
-							args[0] = name[2:]
+						if name[1] == '=' && o.shortOpts['='] == nil {
+							args[0] = string(name[2:])
 						} else {
-							args[0] = name[1:]
+							args[0] = string(name[1:])
 						}
 					} else {
 						// Clustered option.
-						args[0] = "-" + name[1:]
+						args[0] = "-" + string(name[1:])
 					}
 				} else {
 					args = args[1:]
@@ -221,23 +213,23 @@ func (o *Options) Parse(args []string) ([]string, error) {
 			return nil, mkErr(ErrNoSuchOption, arg)
 		}
 
-		if opt.HasValue && len(args) == 0 {
+		if opt.HasArg && len(args) == 0 {
 			return nil, mkErr(ErrOptionRequiresValue, arg)
 		}
 
 		val := ""
-		if opt.HasValue {
+		if opt.HasArg {
 			val = args[0]
 			args = args[1:]
 		}
 
 		opt.Seen = true
 		var e error
-		if opt.HasValue {
-			opt.RawValue = val
+		if opt.HasArg {
+			opt.Raw = val
 		}
-		if opt.HasValue && opt.ValueReceiver != nil {
-			switch v := opt.ValueReceiver.(type) {
+		if opt.HasArg && opt.ArgP != nil {
+			switch v := opt.ArgP.(type) {
 			case *bool:
 				// we get 1, 0, true, false variants,
 				// but not yes and no. We want them.
