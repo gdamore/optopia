@@ -930,7 +930,7 @@ func TestOptions_Parse23(t *testing.T) {
 			if e != nil {
 				return e
 			}
-			if i % 2 != 0 {
+			if i%2 != 0 {
 				return err("even numbers only")
 			}
 			val2 = i
@@ -968,5 +968,71 @@ func TestOptions_Parse23(t *testing.T) {
 	_, e := opts.Parse([]string{"--i=3"})
 	if e == nil || e.Error() != "even numbers only" {
 		t.Errorf("handler didn't fail")
+	}
+}
+
+func TestOptions_Help(t *testing.T) {
+	opts := &Options{}
+	o := []*Option{
+		{
+			Short: 'v',
+			Long:  "verbose",
+			Help:  "Verbose mode",
+		},
+		{
+			Short: 'q',
+			Help:  "Silent mode",
+		},
+		{
+			Short: 'H',
+			Long:  "hidden",
+		},
+		{
+			Short:   'x',
+			ArgName: "POINT",
+			HasArg:  true,
+			Help:    "X coordinate",
+		},
+		{
+			Long:    "delay",
+			ArgName: "SECS",
+			HasArg:  true,
+			Help:    "Delay time",
+		},
+		{
+			Long:   "value",
+			HasArg: true,
+			Help:   "Value details",
+		},
+		{
+			Long:    "interval",
+			Short:   'i',
+			ArgName: "DUR",
+			HasArg: true,
+			Help:    "Interval between operations",
+		},
+	}
+	e := opts.Add(o...)
+	if e != nil {
+		t.Fatalf("Failed add: %v", e)
+	}
+	out := opts.Help()
+	good := `Options:
+  -v, --verbose         Verbose mode
+  -q                    Silent mode
+  -x POINT              X coordinate
+  --delay SECS          Delay time
+  --value ARG           Value details
+  -i, --interval DUR    Interval between operations
+`
+	if good != out {
+		t.Fatalf("result does not match")
+	}
+}
+
+func TestOptions_Help2(t *testing.T) {
+	opts := &Options{}
+	if opts.Help() != "" {
+		t.Fatalf("not empty string")
 	}
 }

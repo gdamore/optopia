@@ -95,8 +95,9 @@ type Option struct {
 // usable immediately.
 type Options struct {
 	shortOpts map[rune]*Option
-	longOpts map[string]*Option
-	initOnce sync.Once
+	longOpts  map[string]*Option
+	initOnce  sync.Once
+	allOpts   []*Option // used to preserve order of addition
 }
 
 func (o *Options) init() {
@@ -128,6 +129,7 @@ func (o *Options) Add(opts ...*Option) error {
 			}
 			o.shortOpts[opt.Short] = opt
 		}
+		o.allOpts = append(o.allOpts, opt)
 		opt.Seen = false
 		opt.Raw = ""
 	}
@@ -274,4 +276,64 @@ func (o *Options) Parse(args []string) ([]string, error) {
 		}
 	}
 	return args, nil
+}
+
+// Help returns a help string based on the options that have been registered.
+// It only includes the option-specific help now -- nothing about the
+// application itself is provided.
+func (o *Options) Help() string {
+	type line struct {
+		tag  string
+		help string
+	}
+	var lines []line
+	tagLen := 0
+
+	// calculate length
+	for _, opt := range o.allOpts {
+		tagBuf := &strings.Builder{}
+
+		if opt.Help == "" {
+			continue
+		}
+		if opt.Short != 0 && opt.Long != "" {
+			_, _ = fmt.Fprintf(tagBuf, "-%c, --%s", opt.Short, opt.Long)
+		} else if opt.Short != 0 {
+			_, _ = fmt.Fprintf(tagBuf, "-%c", opt.Short)
+		} else if opt.Long != "" {
+			_, _ = fmt.Fprintf(tagBuf, "--%s", opt.Long)
+		}
+		if opt.HasArg {
+			if opt.ArgName != "" {
+				_, _ = fmt.Fprintf(tagBuf, " %s", opt.ArgName)
+			} else {
+				_, _ = fmt.Fprint(tagBuf, " ARG")
+			}
+		}
+		tag := tagBuf.String()
+		if len(tag) > tagLen {
+			tagLen = len(tag)
+		}
+		lines = append(lines, line{
+			tag:  tag,
+			help: opt.Help,
+		})
+	}
+
+	if len(lines) == 0 {
+		return ""
+	}
+
+	tagLen += 4 // Padding
+	result := &strings.Builder{}
+	_, _ = result.WriteString("Options:\n")
+	for _, line := range lines {
+		_, _ = fmt.Fprintf(result, "  %s", line.tag)
+		for i := 0; i < tagLen-len(line.tag); i++ {
+			_ = result.WriteByte(' ')
+		}
+		_, _ = result.WriteString(line.help)
+		_ = result.WriteByte('\n')
+	}
+	return result.String()
 }
